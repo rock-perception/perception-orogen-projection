@@ -33,8 +33,12 @@ void VirtualView::addCam( const base::Affine3d& cam2plane, const ::RTT::extras::
     Eigen::Matrix3f camMatrix = 
 	calib.getCameraMatrix();
 
+    // convert to target colorspace and apply undistort
+    tmpFrame.init( frame->size.width, frame->size.height, 8, base::samples::frame::MODE_RGB );
+    frameHelper.convert( *frame, tmpFrame, 0, 0, frame_helper::INTER_LINEAR, true );
+
     // get cv image
-    cv::Mat img = frame_helper::FrameHelper::convertToCvMat( *frame );
+    cv::Mat img = frame_helper::FrameHelper::convertToCvMat( tmpFrame );
 
     // project image in homography
     hom.addImage( img, Eigen::Isometry3f( cam2plane.matrix().cast<float>() ), camMatrix );
@@ -47,29 +51,34 @@ void VirtualView::cam1TransformerCallback(const base::Time &ts, const ::RTT::ext
 	addCam( cam2plane, cam1_sample );
 
     // TODO for now, sync on cam1, but do something smarter later
-    frame_helper::FrameHelper::copyMatToFrame( hom.getVirtualImage(), viewFrame );
-    _virtual_cam.write( &viewFrame );
+    base::samples::frame::Frame* frame_ptr = viewFrame.write_access();
+    cv::Mat rgb;
+    cv::cvtColor( hom.getVirtualImage(), rgb, CV_RGBA2RGB );
+    frame_helper::FrameHelper::copyMatToFrame( rgb, *frame_ptr );
+    viewFrame.reset( frame_ptr );
+
+    _virtual_cam.write( viewFrame );
     hom.clearVirtualImage();
 }
 
 void VirtualView::cam2TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam2_sample)
 {
     Eigen::Affine3d cam2plane;
-    if( _cam12plane.get( ts, cam2plane ) )
+    if( _cam22plane.get( ts, cam2plane ) )
 	addCam( cam2plane, cam2_sample );
 }
 
 void VirtualView::cam3TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam3_sample)
 {
     Eigen::Affine3d cam2plane;
-    if( _cam12plane.get( ts, cam2plane ) )
+    if( _cam32plane.get( ts, cam2plane ) )
 	addCam( cam2plane, cam3_sample );
 }
 
 void VirtualView::cam4TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam4_sample)
 {
     Eigen::Affine3d cam2plane;
-    if( _cam12plane.get( ts, cam2plane ) )
+    if( _cam42plane.get( ts, cam2plane ) )
 	addCam( cam2plane, cam4_sample );
 }
 
@@ -94,6 +103,8 @@ bool VirtualView::configureHook()
 	return false;
     }
 
+    viewFrame.reset( new base::samples::frame::Frame( _width.value(), _height.value(), 8, base::samples::frame::MODE_RGB ) );
+
     return true;
 }
 bool VirtualView::startHook()
@@ -117,4 +128,6 @@ void VirtualView::stopHook()
 void VirtualView::cleanupHook()
 {
     VirtualViewBase::cleanupHook();
+
+    viewFrame.reset(0);
 }

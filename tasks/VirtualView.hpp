@@ -5,6 +5,7 @@
 
 #include "projection/VirtualViewBase.hpp"
 #include <projection/Homography.hpp>
+#include <frame_helper/FrameHelper.h>
 
 namespace projection {
 
@@ -27,7 +28,9 @@ namespace projection {
 	friend class VirtualViewBase;
     protected:
 	projection::Homography hom;
-	base::samples::frame::Frame viewFrame;
+	RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> viewFrame;
+	base::samples::frame::Frame tmpFrame;
+	frame_helper::FrameHelper frameHelper;
 
 	void addCam( const base::Affine3d& cam2body, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame >& frame ); 
 
