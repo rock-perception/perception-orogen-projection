@@ -2,6 +2,7 @@ name "projection"
 import_types_from "projectionTypes.hpp"
 
 using_library "frame_helper"
+using_library "projection"
 import_types_from "base"
 
 task_context "ColorizePointcloud" do
@@ -29,5 +30,42 @@ task_context "ColorizePointcloud" do
     end
 
     port_driven
+end
+
+task_context "VirtualView" do
+    needs_configuration
+
+    # width of the virtual view
+    property "width", "/int", 512
+    # height of the virtual view
+    property "height", "/int", 512
+    # focal length
+    property "focal_length", "/int", 250
+
+    # Dynamic input port declaration for the images
+    input_port "cam1", ro_ptr("/base/samples/frame/Frame")
+    input_port "cam2", ro_ptr("/base/samples/frame/Frame")
+    input_port "cam3", ro_ptr("/base/samples/frame/Frame")
+    input_port "cam4", ro_ptr("/base/samples/frame/Frame")
+
+    # the image for the virtual view
+    output_port "virtual_cam", ro_ptr("/base/samples/frame/Frame")
+
+    transformer do
+	max_latency( 0.2 )
+
+	transformation("virtual_cam", "plane")	
+	transformation("cam1", "plane")
+	transformation("cam2", "plane")
+	transformation("cam3", "plane")
+	transformation("cam4", "plane")
+
+	align_port("cam1") 
+	align_port("cam2") 
+	align_port("cam3") 
+	align_port("cam4") 
+    end
+
+    periodic 0.1
 end
 
