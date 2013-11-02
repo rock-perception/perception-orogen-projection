@@ -1,0 +1,9 @@
+<package>
+  <description brief="Orogen components for reprojection of data sources onto other data. E.g. for colorizing pointclouds and other features.">
+  This library contains tasks for reprojecting and merging data sources. Examples are the colorizing of pointclouds from an image, or the homography reprojection of camera images to get a virtual view.
+  </description>
+  <author>Jakob Schwendner/jakob.schwendner@dfki.de</author>
+  <license>LGPL</license>
+  <depend package="base/cmake" />
+  <depend package="image_processing/frame_helper" />
+</package>
