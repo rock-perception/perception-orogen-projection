@@ -6,6 +6,7 @@
 #include "projection/VirtualViewBase.hpp"
 #include <projection/Homography.hpp>
 #include <frame_helper/FrameHelper.h>
+#include <set>
 
 namespace projection {
 
@@ -31,8 +32,11 @@ namespace projection {
 	RTT::extras::ReadOnlyPointer<base::samples::frame::Frame> viewFrame;
 	base::samples::frame::Frame tmpFrame;
 	frame_helper::FrameHelper frameHelper;
+	std::set<int> addedCams;
 
-	void addCam( const base::Affine3d& cam2body, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame >& frame ); 
+	void checkComplete();
+
+	void addCam( const base::Affine3d& cam2body, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame >& frame, int id ); 
 
 
         virtual void cam1TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam1_sample);

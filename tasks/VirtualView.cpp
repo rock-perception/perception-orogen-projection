@@ -20,9 +20,34 @@ VirtualView::~VirtualView()
 {
 }
 
-
-void VirtualView::addCam( const base::Affine3d& cam2plane, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame >& frame )
+void VirtualView::checkComplete()
 {
+    if( (_cam1.connected() && !addedCams.count(1))
+	|| (_cam2.connected() && !addedCams.count(2))
+	|| (_cam3.connected() && !addedCams.count(3))
+	|| (_cam4.connected() && !addedCams.count(4)) )
+    {
+	return;
+    }
+
+    base::samples::frame::Frame* frame_ptr = viewFrame.write_access();
+    cv::Mat viewMat = frame_helper::FrameHelper::convertToCvMat( *frame_ptr );
+    cv::cvtColor( hom.getVirtualImage(), viewMat, CV_RGBA2RGB );
+    viewFrame.reset( frame_ptr );
+
+    _virtual_cam.write( viewFrame );
+    hom.clearVirtualImage();
+
+    addedCams.clear();
+}
+
+
+void VirtualView::addCam( const base::Affine3d& cam2plane, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame >& frame, int id )
+{
+    // already added
+    if( addedCams.count( id ) )
+	return;
+
     // get calibration matrix
     frame_helper::CameraCalibration calib = 
 	frame_helper::CameraCalibration::fromFrame( *frame );
@@ -42,44 +67,38 @@ void VirtualView::addCam( const base::Affine3d& cam2plane, const ::RTT::extras::
 
     // project image in homography
     hom.addImage( img, Eigen::Isometry3f( cam2plane.matrix().cast<float>() ), camMatrix );
+
+    addedCams.insert( id );
+
+    checkComplete();
 }
 
 void VirtualView::cam1TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam1_sample)
 {
     Eigen::Affine3d cam2plane;
     if( _cam12plane.get( ts, cam2plane ) )
-	addCam( cam2plane, cam1_sample );
-
-    // TODO for now, sync on cam1, but do something smarter later
-    base::samples::frame::Frame* frame_ptr = viewFrame.write_access();
-    cv::Mat rgb;
-    cv::cvtColor( hom.getVirtualImage(), rgb, CV_RGBA2RGB );
-    frame_helper::FrameHelper::copyMatToFrame( rgb, *frame_ptr );
-    viewFrame.reset( frame_ptr );
-
-    _virtual_cam.write( viewFrame );
-    hom.clearVirtualImage();
+	addCam( cam2plane, cam1_sample, 1 );
 }
 
 void VirtualView::cam2TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam2_sample)
 {
     Eigen::Affine3d cam2plane;
     if( _cam22plane.get( ts, cam2plane ) )
-	addCam( cam2plane, cam2_sample );
+	addCam( cam2plane, cam2_sample, 2 );
 }
 
 void VirtualView::cam3TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam3_sample)
 {
     Eigen::Affine3d cam2plane;
     if( _cam32plane.get( ts, cam2plane ) )
-	addCam( cam2plane, cam3_sample );
+	addCam( cam2plane, cam3_sample, 3 );
 }
 
 void VirtualView::cam4TransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &cam4_sample)
 {
     Eigen::Affine3d cam2plane;
     if( _cam42plane.get( ts, cam2plane ) )
-	addCam( cam2plane, cam4_sample );
+	addCam( cam2plane, cam4_sample, 4 );
 }
 
 /// The following lines are template definitions for the various state machine
