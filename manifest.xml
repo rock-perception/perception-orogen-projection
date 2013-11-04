@@ -6,4 +6,5 @@
   <license>LGPL</license>
   <depend package="base/cmake" />
   <depend package="image_processing/frame_helper" />
+  <depend package="image_processing/projection" />
 </package>
