@@ -40,7 +40,6 @@ void writePlyFile( const base::samples::Pointcloud& points, const std::string& f
 
     if( !points.colors.empty() )
     {
-	data << "element color " << points.points.size() <<  "\n";
 	data << "property uchar red\n";
 	data << "property uchar green\n";
 	data << "property uchar blue\n";
@@ -52,16 +51,16 @@ void writePlyFile( const base::samples::Pointcloud& points, const std::string& f
 	data 
 	    << points.points[i].x() << " "
 	    << points.points[i].y() << " "
-	    << points.points[i].z() << "\n";
-    }
-
-    for( size_t i = 0; i < points.colors.size(); i++ )
-    {
-	data 
-	    << (int)(points.colors[i].x()*255) << " "
-	    << (int)(points.colors[i].y()*255) << " "
-	    << (int)(points.colors[i].z()*255) << " "
-	    << (int)(points.colors[i].w()*255) << "\n";
+	    << points.points[i].z() << " ";
+	if( !points.colors.empty() )
+	{
+	    data 
+		<< (int)(points.colors[i].x()*255) << " "
+		<< (int)(points.colors[i].y()*255) << " "
+		<< (int)(points.colors[i].z()*255) << " "
+		<< (int)(points.colors[i].w()*255) << " ";
+	}
+	data << "\n";
     }
 }
 
