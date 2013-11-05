@@ -27,6 +27,7 @@ namespace projection {
 	friend class ColorizePointcloudBase;
     protected:
 
+	bool has_points;;
 	frame_helper::FrameHelper frameHelper;
 	base::samples::Pointcloud points;
 	base::samples::frame::Frame frame;

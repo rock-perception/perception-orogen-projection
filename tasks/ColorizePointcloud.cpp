@@ -67,6 +67,10 @@ void writePlyFile( const base::samples::Pointcloud& points, const std::string& f
 
 void ColorizePointcloud::cameraTransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &camera_sample)
 {
+    // only process once per pointcloud
+    if( !has_points )
+	return;
+
     // get calibration matrix
     frame_helper::CameraCalibration calib = 
 	frame_helper::CameraCalibration::fromFrame( *camera_sample );
@@ -105,6 +109,10 @@ void ColorizePointcloud::cameraTransformerCallback(const base::Time &ts, const :
 		rgb *v = (rgb*)&frame.at<uint8_t>( x, y );
 		points.colors[i] = base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0;
 	    }
+	    else
+	    {
+		points.colors[i] = base::Vector4d::Zero();
+	    }
 	}
     }
 
@@ -113,11 +121,14 @@ void ColorizePointcloud::cameraTransformerCallback(const base::Time &ts, const :
 
     if( !_output_ply.value().empty() )
 	writePlyFile( points, _output_ply.value() );
+
+    has_points = false;
 }
 
 void ColorizePointcloud::pointsTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &points_sample)
 {
     points = points_sample;
+    has_points = true;
 }
 
 /// The following lines are template definitions for the various state machine
@@ -134,6 +145,8 @@ bool ColorizePointcloud::startHook()
 {
     if (! ColorizePointcloudBase::startHook())
         return false;
+
+    has_points = false;
     return true;
 }
 void ColorizePointcloud::updateHook()
