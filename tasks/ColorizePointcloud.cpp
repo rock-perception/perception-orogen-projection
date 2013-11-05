@@ -45,6 +45,7 @@ void writePlyFile( const base::samples::Pointcloud& points, const std::string& f
 	data << "property uchar blue\n";
 	data << "property uchar alpha\n";
     }
+    data << "end_header\n";
 
     for( size_t i = 0; i < points.points.size(); i++ )
     {
