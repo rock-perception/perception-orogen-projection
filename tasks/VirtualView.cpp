@@ -56,7 +56,7 @@ void VirtualView::addCam( const base::Affine3d& cam2plane, const ::RTT::extras::
 	throw std::runtime_error("No valid calibration matrix embedded in frame");
 
     Eigen::Matrix3f camMatrix = 
-	calib.getCameraMatrix();
+	calib.getCameraMatrix().cast<float>();
 
     // convert to target colorspace and apply undistort
     tmpFrame.init( frame->size.width, frame->size.height, 8, base::samples::frame::MODE_RGB );
