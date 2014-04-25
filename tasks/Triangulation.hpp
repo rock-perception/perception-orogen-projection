@@ -26,6 +26,8 @@ namespace projection {
 	friend class TriangulationBase;
     protected:
 
+        bool v1, v2;
+
 
 
     public:

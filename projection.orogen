@@ -26,6 +26,8 @@ task_context "Triangulation" do
 
 	transformation("base", "cam1")	
     end
+
+    port_driven
 end
 
 task_context "ColorizePointcloud" do
