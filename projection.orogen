@@ -4,6 +4,29 @@ import_types_from "projectionTypes.hpp"
 using_library "frame_helper"
 using_library "projection"
 import_types_from "base"
+import_types_from "frame_helper/Calibration.h"
+
+task_context "Triangulation" do
+    needs_configuration
+    
+    property("extrinsic_calibration", "/frame_helper/ExtrinsicCalibration").
+        doc "extrinsic calibration between cam1 and cam2"
+
+    input_port("cam1_point", "/base/Vector2d").
+        doc "projected point in camera1"
+
+    input_port("cam2_point", "/base/Vector2d").
+        doc "projected point in camera2"
+
+    output_port("scene_point", "/base/Vector3d").
+        doc "resulting scene point"
+
+    transformer do
+	max_latency( 0.2 )
+
+	transformation("base", "cam1")	
+    end
+end
 
 task_context "ColorizePointcloud" do
     needs_configuration
