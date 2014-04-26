@@ -1,0 +1,160 @@
+#! /usr/bin/env ruby
+
+require 'rock/bundles'
+require 'vizkit'
+include Orocos
+
+if ARGV.size < 1
+    puts "usage: stereo_triangulation <input_log|cam1_task cam2_task>"
+    exit 0
+end
+
+class StereoWidget < Qt::Widget
+    slots 'click_left(QPoint)', 'click_right(QPoint)',
+        'click_left_norm(QPointF)', 'click_right_norm(QPointF)'
+
+    def initialize( parent = nil )
+	super()
+
+	@left = nil
+	@right = nil
+	@index = 0
+    end
+
+    def setFrames( left_frame, right_frame )
+	@value = Qt::Label.new("0")
+	@error = Qt::Label.new("error: ")
+	@scene_pos = Qt::Label.new("position: ")
+
+	buttons = Qt::Widget.new()
+	buttonLayout = Qt::GridLayout.new()
+	buttonLayout.addWidget( @value, 0, 0 )
+	buttonLayout.addWidget( @error, 1, 0 )
+	buttonLayout.addWidget( @scene_pos, 2, 0 )
+	buttons.setLayout( buttonLayout )
+
+	gridLayout = Qt::GridLayout.new()
+        @im_left = Vizkit.display( left_frame )
+        @im_right = Vizkit.display( right_frame )
+	gridLayout.addWidget( @im_left, 0, 0 )
+	gridLayout.addWidget( @im_right, 0, 1 )
+	gridLayout.addWidget( buttons, 0, 2 )
+	gridLayout.setColumnStretch( 0, 10 )
+	gridLayout.setColumnStretch( 1, 10 )
+
+	setLayout( gridLayout )
+
+	#connect(@button, SIGNAL('clicked()'), self, SLOT('save()'))
+        connect(@im_left, SIGNAL('clickedImage(const QPoint&)'), self, SLOT('click_left(const QPoint&)'))
+        connect(@im_right, SIGNAL('clickedImage(const QPoint&)'), self, SLOT('click_right(const QPoint&)'))
+
+        connect(@im_left, SIGNAL('clickedImageNormalized(const QPointF&)'), 
+                self, SLOT('click_left_norm(const QPointF&)'))
+        connect(@im_right, SIGNAL('clickedImageNormalized(const QPointF&)'), 
+                self, SLOT('click_right_norm(const QPointF&)'))
+    end
+    
+    def set_task task
+        @p1_writer = task.cam1_point.writer
+        @p2_writer = task.cam2_point.writer
+    end
+
+    def click_left_norm point
+        p = Types::Base::Vector2d.new
+        p.data[0] = point.x
+        p.data[1] = point.y
+        pp p
+        @p1_writer.write p
+    end
+
+    def click_right_norm point
+        p = Types::Base::Vector2d.new
+        p.data[0] = point.x
+        p.data[1] = point.y
+        @p2_writer.write p
+    end
+
+    def click_left point
+        @im_left.clearOverlays( true )
+        @im_left.addCircle( Qt::PointF.new( point.x, point.y), 10, Qt::Color.new(255,0,0), 5, true )
+    end
+
+    def click_right point
+        @im_right.clearOverlays( true )
+        @im_right.addCircle( Qt::PointF.new( point.x, point.y), 10, Qt::Color.new(255,0,0), 5, true )
+    end
+
+    def update
+	if @left and @right
+	    @value.text = (@left.time - @right.time).to_s
+	end
+    end
+
+    def updateLeft( frame )
+	@left = frame
+	update
+    end
+
+    def updateRight( frame )
+	@right = frame
+	update
+    end
+
+    def updateError error
+        @error.text = "error: #{error}"
+    end
+
+    def updateScenePos pos
+        @scene_pos.text = "position: #{pos}"
+    end
+end
+
+Bundles.run 'projection::Triangulation' => 'tri', 'output' => nil do |p|
+    widget = StereoWidget.new nil
+    if File.directory? ARGV[0] or File.exists? ARGV[0]
+        log.camera_left.frame.connect_to do |data, ts|
+            widget.updateLeft( data )
+            data
+        end
+
+        log.camera_right.frame.connect_to do |data, ts|
+            widget.updateRight( data )
+            data
+        end
+        log = Orocos::Log::Replay.open( ARGV[0] )
+        widget.setFrames log.camera_left.frame, log.camera_right.frame
+        Vizkit.control log
+    else
+        Orocos.initialize
+        cam_left = Orocos::TaskContext.get ARGV[0]
+        cam_left.frame.connect_to do |data, ts|
+            widget.updateLeft( data )
+            data
+        end
+        cam_right = Orocos::TaskContext.get ARGV[1]
+        cam_right.frame.connect_to do |data, ts|
+            widget.updateRight( data )
+            data
+        end
+        widget.setFrames cam_left.frame, cam_right.frame
+    end
+
+    tri = Orocos.get 'tri' 
+    Orocos.conf.apply tri, ['default']
+    tri.configure
+    tri.start
+
+    widget.set_task tri
+
+    tri.scene_point.connect_to do |data, ts|
+        widget.updateScenePos "#{data.data[0]}, #{data.data[1]} #{data.data[2]}"
+    end
+
+    tri.error.connect_to do |data, ts|
+        widget.updateError data.to_s
+    end
+
+    widget.show
+    Vizkit.exec
+end
+

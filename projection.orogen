@@ -21,6 +21,9 @@ task_context "Triangulation" do
     output_port("scene_point", "/base/Vector3d").
         doc "resulting scene point"
 
+    output_port("error", "/double").
+        doc "ray alignment error for the scene point"
+
     transformer do
 	max_latency( 0.2 )
 

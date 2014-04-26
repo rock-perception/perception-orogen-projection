@@ -4,6 +4,7 @@
 #define PROJECTION_TRIANGULATION_TASK_HPP
 
 #include "projection/TriangulationBase.hpp"
+#include <projection/StereoTriangulation.hpp>
 
 namespace projection {
 
@@ -26,9 +27,8 @@ namespace projection {
 	friend class TriangulationBase;
     protected:
 
-        bool v1, v2;
-
-
+        bool _valid1, _valid2;
+        projection::StereoTriangulation _tri;
 
     public:
         /** TaskContext constructor for Triangulation

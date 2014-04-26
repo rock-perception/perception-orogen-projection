@@ -6,13 +6,13 @@ using namespace projection;
 
 Triangulation::Triangulation(std::string const& name)
     : TriangulationBase(name),
-      v1(false), v2(false)
+      _valid1(false), _valid2(false)
 {
 }
 
 Triangulation::Triangulation(std::string const& name, RTT::ExecutionEngine* engine)
     : TriangulationBase(name, engine),
-      v1(false), v2(false)
+      _valid1(false), _valid2(false)
 {
 }
 
@@ -45,38 +45,20 @@ void Triangulation::updateHook()
     // get the point from the input
     base::Vector2d p1, p2;
     while( _cam1_point.read( p1 ) == RTT::NewData )
-        v1 = true;
+        _valid1 = true;
     while( _cam2_point.read( p2 ) == RTT::NewData )
-        v2 = true;
+        _valid2 = true;
 
-    if( v1 && v2 )
+    if( _valid1 && _valid2 )
     {
-        // get homogenous coordinates
-        Eigen::Vector3d xl, xr;
-        xl << p1, 1;
-        xr << p2, 1; 
-
-        // get the transform from a to b
-        base::Transform3d trans = _extrinsic_calibration.value().getTransform();
-        Eigen::Quaterniond R(trans.rotation());
-        Eigen::Vector3d T(trans.translation());
-
-        // now calculate the triangulation by solving a linear system
-        Eigen::Matrix<double,2,3> A;
-        A << xl, -(R.inverse()*xr), (xl.cross(R.inverse()*xr-T)-T);
-        Eigen::Matrix<double,3,1> b;
-        b << -1.0*R.inverse()*T;
-        Eigen::Vector3d param = A.colPivHouseholderQr().solve(b);
-
-        Eigen::Vector3d Vp = param[2]*(xl.cross(R.inverse()*xr-T)-T);
-        Eigen::Vector3d Xl; 
-        Xl << xl, 1.0;
-        Xl *= param[0];
-
-        Eigen::Vector3d X = Xl + 0.5 * Vp;
+        // setup the triangulation class
+        Eigen::Isometry3d trans( _extrinsic_calibration.value().getTransform().matrix() );
+        _tri.setTransform( trans );
+        _tri.calcScenePoint( p1, p2 );
 
         // write out the result to a port
-        _scene_point.write( X );
+        _scene_point.write( _tri.getScenePoint() );
+        _error.write( _tri.getError() );
     }
 }
 void Triangulation::errorHook()
