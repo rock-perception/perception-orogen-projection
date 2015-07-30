@@ -32,9 +32,9 @@ namespace projection {
 	base::samples::Pointcloud points;
 	base::samples::frame::Frame frame;
 
-        virtual void cameraTransformerCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &camera_sample);
+        virtual void cameraCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &camera_sample);
 
-        virtual void pointsTransformerCallback(const base::Time &ts, const ::base::samples::Pointcloud &points_sample);
+        virtual void pointsCallback(const base::Time &ts, const ::base::samples::Pointcloud &points_sample);
 
     public:
         /** TaskContext constructor for ColorizePointcloud

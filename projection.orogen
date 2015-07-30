@@ -39,6 +39,9 @@ task_context "ColorizePointcloud" do
     property("output_ply", "/std/string", "").
 	doc "resulting ply file"
 
+    property("pc2Cam", "base::Matrix4d")
+	doc "Matrix, to convert the pointcloud into the camera view"
+
     input_port("points", "/base/samples/Pointcloud" ).
 	doc 'input pointcloud'
 
@@ -48,13 +51,11 @@ task_context "ColorizePointcloud" do
     output_port("colored_points", "/base/samples/Pointcloud").
 	doc 'output pointcloud'
 
-    transformer do
+    stream_aligner do
 	max_latency( 0.2 )
 
-	transformation("pointcloud", "camera")	
-
-	align_port("camera") 
-	align_port("points") 
+	align_port("camera", 0) 
+	align_port("points", 0) 
     end
 
     port_driven
