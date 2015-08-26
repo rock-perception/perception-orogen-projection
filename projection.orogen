@@ -37,28 +37,63 @@ task_context "ColorizePointcloud" do
     needs_configuration
 
     property("output_ply", "/std/string", "").
-	doc "resulting ply file"
+        doc "resulting ply file"
 
     property("pc2Cam", "base::Matrix4d")
-	doc "Matrix, to convert the pointcloud into the camera view"
+        doc "Matrix, to convert the pointcloud into the camera view"
 
     property("doUndistortion", "bool", true)
         doc "Matrix, to convert the pointcloud into the camera view"
 
     input_port("points", "/base/samples/Pointcloud" ).
-	doc 'input pointcloud'
+        doc 'input pointcloud'
 
     input_port("camera", ro_ptr("/base/samples/frame/Frame")).
-	doc 'camera image that is projected into the input pointcloud'
+        doc 'camera image that is projected into the input pointcloud'
 
     output_port("colored_points", "/base/samples/Pointcloud").
-	doc 'output pointcloud'
+        doc 'output pointcloud'
 
     stream_aligner do
-	max_latency( 0.2 )
+        max_latency( 0.2 )
 
-	align_port("camera", 0) 
-	align_port("points", 0) 
+        align_port("camera", 0) 
+        align_port("points", 0) 
+    end
+
+    port_driven
+end
+
+task_context "ColorizePointcloudMultiCam" do
+    needs_configuration
+
+    property("pc2Cam1", "base::Matrix4d")
+        doc "Matrix, to convert the pointcloud into the camera view"
+
+    property("pc2Cam2", "base::Matrix4d")
+        doc "Matrix, to convert the pointcloud into the camera view"
+
+    property("doUndistortion", "bool", true)
+        doc "Matrix, to convert the pointcloud into the camera view"
+
+    input_port("points", "/base/samples/Pointcloud" ).
+        doc 'input pointcloud'
+
+    input_port("camera1", ro_ptr("/base/samples/frame/Frame")).
+        doc 'camera image that is projected into the input pointcloud'
+
+    input_port("camera2", ro_ptr("/base/samples/frame/Frame")).
+        doc 'camera image that is projected into the input pointcloud'
+
+    output_port("colored_points", "/base/samples/Pointcloud").
+        doc 'output pointcloud'
+
+    stream_aligner do
+        max_latency( 0.2 )
+
+        align_port("camera1", 0) 
+        align_port("camera2", 0) 
+        align_port("points", 0) 
     end
 
     port_driven
