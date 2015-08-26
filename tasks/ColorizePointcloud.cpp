@@ -67,10 +67,6 @@ void writePlyFile( const base::samples::Pointcloud& points, const std::string& f
 
 void ColorizePointcloud::cameraCallback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &camera_sample)
 {
-    // only process once per pointcloud
-    if( !has_points )
-        return;
-
     // get calibration matrix
     frame_helper::CameraCalibration calib = 
         frame_helper::CameraCalibration::fromFrame( *camera_sample );
@@ -78,62 +74,59 @@ void ColorizePointcloud::cameraCallback(const base::Time &ts, const ::RTT::extra
     if( !calib.isValid() )
         throw std::runtime_error("No valid calibration matrix embedded in frame");
 
-    Eigen::Matrix3d camMatrix = 
-        calib.getCameraMatrix().cast<double>();
-
     // convert to target colorspace and apply undistort
     frame.init( camera_sample->size.width, camera_sample->size.height, 8, base::samples::frame::MODE_RGB );
     frameHelper.convert( *camera_sample, frame, 0, 0, frame_helper::INTER_LINEAR, _doUndistortion.get());
 
-    // get the transformation
-    Eigen::Matrix4d points2camM = _pc2Cam.get();
+    hasImage = true;
+}
 
+void ColorizePointcloud::colorizePointCloud(base::samples::Pointcloud& pointsCloud, base::samples::frame::Frame& image, const Eigen::Matrix4d& points2Cam)
+{
     // prepare the target pointcloud
-    points.colors.resize( points.points.size() );
+    //init pointcloud color with black (unknown)
+    pointsCloud.colors.resize( pointsCloud.points.size(), base::Vector4d::Zero());
 
-    int colors = 0;
-    
     // iterate through all the points 
-    for( size_t i = 0; i < points.points.size(); ++i )
+    for( size_t i = 0; i < pointsCloud.points.size(); ++i )
     {
+        //check if the color was already set
+        if(!pointsCloud.colors[i].isZero())
+            continue;
+        
         // get image coordinate of point
-        Eigen::Vector3d p = (points2camM * Eigen::Vector4d(points.points[i].x(), points.points[i].y(), points.points[i].z(), 1)).head(3);
-        if(true || p.z() > 0 )
+        Eigen::Vector3d p = (points2Cam * Eigen::Vector4d(pointsCloud.points[i].x(), pointsCloud.points[i].y(), pointsCloud.points[i].z(), 1)).head(3);
+        if(p.z() > 0 )
         {
             int x = p.x() / p.z();
             int y = p.y() / p.z();
 
             // is in image
-            if( x >= 0 && x < frame.size.width && y >= 0 && y < frame.size.height )
+            if( x >= 0 && x < image.size.width && y >= 0 && y < image.size.height )
             {
-                rgb *v = (rgb*)&frame.at<uint8_t>( x, y );
-                points.colors[i] = base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0;
-                colors++;
-            }
-            else
-            {
-                points.colors[i] = base::Vector4d::Zero();
+                const rgb *v = (const rgb*)&image.at<const uint8_t>( x, y );
+                pointsCloud.colors[i] = base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0;
             }
         }
-        else
-            points.colors[i] = base::Vector4d::Zero();
     }
+    
+}
 
-    std::cout << "Colorized " << colors << " points " << std::endl;
+
+void ColorizePointcloud::pointsCallback(const base::Time &ts, const ::base::samples::Pointcloud &points_sample)
+{
+    if(!hasImage)
+        return;
+
+    points = points_sample;
+    
+    colorizePointCloud(points, frame, _pc2Cam.get());
     
     // write out the result
     _colored_points.write( points );
 
     if( !_output_ply.value().empty() )
         writePlyFile( points, _output_ply.value() );
-
-    has_points = false;
-}
-
-void ColorizePointcloud::pointsCallback(const base::Time &ts, const ::base::samples::Pointcloud &points_sample)
-{
-    points = points_sample;
-    has_points = true;
 }
 
 /// The following lines are template definitions for the various state machine
@@ -151,7 +144,7 @@ bool ColorizePointcloud::startHook()
     if (! ColorizePointcloudBase::startHook())
         return false;
 
-    has_points = false;
+    hasImage = false;
     return true;
 }
 void ColorizePointcloud::updateHook()

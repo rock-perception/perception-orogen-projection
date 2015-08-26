@@ -27,7 +27,7 @@ namespace projection {
 	friend class ColorizePointcloudBase;
     protected:
 
-	bool has_points;;
+        bool hasImage;
 	frame_helper::FrameHelper frameHelper;
 	base::samples::Pointcloud points;
 	base::samples::frame::Frame frame;
@@ -36,6 +36,8 @@ namespace projection {
 
         virtual void pointsCallback(const base::Time &ts, const ::base::samples::Pointcloud &points_sample);
 
+        void colorizePointCloud(base::samples::Pointcloud& pointsCloud, base::samples::frame::Frame& image, const Eigen::Matrix4d& points2Cam);
+        
     public:
         /** TaskContext constructor for ColorizePointcloud
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
