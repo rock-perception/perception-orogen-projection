@@ -83,7 +83,7 @@ void ColorizePointcloud::cameraCallback(const base::Time &ts, const ::RTT::extra
 
     // convert to target colorspace and apply undistort
     frame.init( camera_sample->size.width, camera_sample->size.height, 8, base::samples::frame::MODE_RGB );
-    frameHelper.convert( *camera_sample, frame, 0, 0, frame_helper::INTER_LINEAR, true );
+    frameHelper.convert( *camera_sample, frame, 0, 0, frame_helper::INTER_LINEAR, _doUndistortion.get());
 
     // get the transformation
     Eigen::Matrix4d points2camM = _pc2Cam.get();

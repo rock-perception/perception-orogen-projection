@@ -42,6 +42,9 @@ task_context "ColorizePointcloud" do
     property("pc2Cam", "base::Matrix4d")
 	doc "Matrix, to convert the pointcloud into the camera view"
 
+    property("doUndistortion", "bool", true)
+        doc "Matrix, to convert the pointcloud into the camera view"
+
     input_port("points", "/base/samples/Pointcloud" ).
 	doc 'input pointcloud'
 
