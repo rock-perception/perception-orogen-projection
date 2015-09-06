@@ -39,7 +39,7 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
 
     pointsCloud.points.clear();
     pointsCloud.points.reserve(cpy.points.size());
-    
+
     // iterate through all the points 
     for( size_t i = 0; i < cpy.points.size(); ++i )
     {
@@ -68,7 +68,7 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
                     int y = p.y() / p.z();
 
                     // is in image
-                    if( x >= 0 && x < image.size.width && y >= 0 && y < image.size.height )
+                    if( x >= 0 && x < image2.size.width && y >= 0 && y < image2.size.height )
                     {
                         rgb *v = (rgb*)&image.at<uint8_t>( x, y );
                         pointsCloud.points.push_back(cpy.points[i]);
@@ -77,7 +77,7 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
                 }
             }
         }
-    }    
+    }
 }
 
 void ColorizePointcloudMultiCam::camera1Callback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &camera1_sample)
@@ -117,6 +117,8 @@ void ColorizePointcloudMultiCam::pointsCallback(const base::Time &ts, const ::ba
     if(!(hasImage1 && hasImage2))
         return;
     
+    points = points_sample;
+
     colorizePointCloud(points, frame1, _pc2Cam1.get(), frame2, _pc2Cam2.get());
     
     _colored_points.write(points);
