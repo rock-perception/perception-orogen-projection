@@ -30,14 +30,20 @@ struct __attribute__((__packed__)) rgb
 void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& pointsCloud, base::samples::frame::Frame& image, const Eigen::Matrix4d& points2Cam, base::samples::frame::Frame& image2, const Eigen::Matrix4d& points2Cam2
 )
 {
+    base::samples::Pointcloud cpy;
+    cpy.points.swap(pointsCloud.points);
+    
     // prepare the target pointcloud
     //init pointcloud color with black (unknown)
-    pointsCloud.colors.resize( pointsCloud.points.size(), base::Vector4d::Zero());
+    pointsCloud.colors.reserve( pointsCloud.points.size());
 
+    pointsCloud.points.clear();
+    pointsCloud.points.reserve(cpy.points.size());
+    
     // iterate through all the points 
-    for( size_t i = 0; i < pointsCloud.points.size(); ++i )
+    for( size_t i = 0; i < cpy.points.size(); ++i )
     {
-        const Eigen::Vector4d point(pointsCloud.points[i].x(), pointsCloud.points[i].y(), pointsCloud.points[i].z(), 1);
+        const Eigen::Vector4d point(cpy.points[i].x(), cpy.points[i].y(), cpy.points[i].z(), 1);
         
         // get image coordinate of point
         Eigen::Vector3d p = (points2Cam * point).head(3);
@@ -50,7 +56,8 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
             if( x >= 0 && x < image.size.width && y >= 0 && y < image.size.height )
             {
                 rgb *v = (rgb*)&image.at<uint8_t>( x, y );
-                pointsCloud.colors[i] = base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0;
+                pointsCloud.points.push_back(cpy.points[i]);
+                pointsCloud.colors.push_back(base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0);
             } 
             else
             {
@@ -64,13 +71,13 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
                     if( x >= 0 && x < image.size.width && y >= 0 && y < image.size.height )
                     {
                         rgb *v = (rgb*)&image.at<uint8_t>( x, y );
-                        pointsCloud.colors[i] = base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0;
+                        pointsCloud.points.push_back(cpy.points[i]);
+                        pointsCloud.colors.push_back(base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0);
                     } 
                 }
             }
         }
-    }
-    
+    }    
 }
 
 void ColorizePointcloudMultiCam::camera1Callback(const base::Time &ts, const ::RTT::extras::ReadOnlyPointer< ::base::samples::frame::Frame > &camera1_sample)
