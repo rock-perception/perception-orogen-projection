@@ -70,7 +70,7 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
                     // is in image
                     if( x >= 0 && x < image2.size.width && y >= 0 && y < image2.size.height )
                     {
-                        rgb *v = (rgb*)&image.at<uint8_t>( x, y );
+                        rgb *v = (rgb*)&image2.at<uint8_t>( x, y );
                         pointsCloud.points.push_back(cpy.points[i]);
                         pointsCloud.colors.push_back(base::Vector4d( v->r, v->g, v->b, 255.0 ) / 255.0);
                     } 
