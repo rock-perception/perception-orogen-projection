@@ -6,6 +6,33 @@ using_library "projection"
 import_types_from "base"
 import_types_from "frame_helper/Calibration.h"
 
+import_types_from "projection/OmnidirectionalConfig.hpp"
+
+# Planar reprojection task for omnicam input images
+task_context "OmnicamPlanar" do
+    needs_configuration
+
+    property("omnicam_calibration", "/projection/omnicam/Model").
+	doc "calibration parameters for the omnidirection camera model"
+
+    property("width", "/int", 640).
+    	doc "width of the virtual view"
+
+    property("height", "/int", 480).
+    	doc "height of the virtual view"
+
+    input_port("view_config", "/projection/omnicam/PlanarViewConfiguration").
+	doc "Parameters of the planar view"
+
+    input_port("omnicam", ro_ptr("/base/samples/frame/Frame")).
+        doc 'camera image that is projected into the input pointcloud'
+
+    output_port("planar_view", ro_ptr("/base/samples/frame/Frame")).
+	doc 'resulting planar view image'
+
+    port_driven "omnicam", "view_config"
+end
+
 task_context "Triangulation" do
     needs_configuration
     
