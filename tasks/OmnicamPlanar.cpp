@@ -1,7 +1,6 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
 #include "OmnicamPlanar.hpp"
-#include <opencv2/highgui/highgui.hpp>
 
 using namespace projection;
 
@@ -29,12 +28,6 @@ bool OmnicamPlanar::configureHook()
 {
     if (! OmnicamPlanarBase::configureHook())
         return false;
-
-    //projection::omnicam::Model model;
-    //model.loadFromFile("/home/jakob/Desktop/calib_results.txt");
-    //model.setAngleRange( -43.0 / 180.0 * M_PI, 35 / 180.0 * M_PI );
-    //planarProjection.init( _width.value(), _height.value(), model );
-    //_omnicam_calibration.value() = model;
 
     planarProjection.init( _width.value(), _height.value(), _omnicam_calibration.value() );
     viewFrame.reset( new base::samples::frame::Frame( _width.value(), _height.value(), 8, base::samples::frame::MODE_RGB ) );
