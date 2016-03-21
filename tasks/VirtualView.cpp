@@ -33,6 +33,7 @@ void VirtualView::checkComplete()
     base::samples::frame::Frame* frame_ptr = viewFrame.write_access();
     cv::Mat viewMat = frame_helper::FrameHelper::convertToCvMat( *frame_ptr );
     cv::cvtColor( hom.getVirtualImage(), viewMat, CV_RGBA2RGB );
+    frame_ptr->time = last_sample_ts;
     frame_ptr->setStatus(base::samples::frame::STATUS_VALID);
     viewFrame.reset( frame_ptr );
 
@@ -62,6 +63,7 @@ void VirtualView::addCam( const base::Affine3d& cam2plane, const ::RTT::extras::
     // convert to target colorspace and apply undistort
     tmpFrame.init( frame->size.width, frame->size.height, 8, base::samples::frame::MODE_RGB );
     frameHelper.convert( *frame, tmpFrame, 0, 0, frame_helper::INTER_LINEAR, true );
+    last_sample_ts = frame->time;
 
     // get cv image
     cv::Mat img = frame_helper::FrameHelper::convertToCvMat( tmpFrame );
