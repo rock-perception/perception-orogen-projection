@@ -63,6 +63,8 @@ void OmnicamEquirectangular::updateHook()
         base::samples::frame::Frame* frame_ptr = viewFrame.write_access();
         cv::Mat viewMat = frame_helper::FrameHelper::convertToCvMat( *frame_ptr );
         equiProjection.getView().copyTo( viewMat );
+        frame_ptr->time = omniFrame->time;
+        frame_ptr->setStatus(base::samples::frame::STATUS_VALID);
         viewFrame.reset( frame_ptr );
 
         _view.write( viewFrame );

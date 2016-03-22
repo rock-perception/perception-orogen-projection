@@ -33,6 +33,7 @@ namespace projection {
 	base::samples::frame::Frame tmpFrame;
 	frame_helper::FrameHelper frameHelper;
 	std::set<int> addedCams;
+        base::Time last_sample_ts;
 
 	void checkComplete();
 
