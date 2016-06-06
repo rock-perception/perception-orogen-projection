@@ -77,6 +77,12 @@ void ColorizePointcloudMultiCam::colorizePointCloud(base::samples::Pointcloud& p
                 }
             }
         }
+	else
+	{
+
+	    pointsCloud.points.push_back(cpy.points[i]);
+	    pointsCloud.colors.push_back(base::Vector4d( 255, 255, 255, 255.0 ) / 255.0);
+	}
     }
 }
 
